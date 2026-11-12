@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zorgen voor later &mdash; beschikbaarheid in Vlaamse bibliotheken</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --sand: #EFE1C3;
+    --sand-light: #F7EFDA;
+    --teal: #24454C;
+    --teal-light: #CFE0DF;
+    --rust: #C1592B;
+    --ochre: #D79B3E;
+    --ink: #2A2013;
+    --ink-soft: #5C523C;
+    --available: #4C7A4F;
+    --processing: #6E8B94;
+    --card-line: #D8C6A0;
+    --line-strong: #A98F5E;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--sand);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  h1,h2,h3, .stamp-number{ font-family:'Lora', serif; margin:0; }
+  a{ color: var(--rust); }
+
+  .drawer-label{
+    background: var(--teal);
+    color: var(--sand-light);
+    padding: 22px clamp(16px,4vw,48px);
+    border-bottom: 4px solid var(--ochre);
+    display:flex;
+    align-items:center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .drawer-label .cover-thumb{
+    width: 62px;
+    height: 92px;
+    object-fit: cover;
+    flex: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .drawer-label .book-info{ flex: 1; min-width: 220px; }
+  .drawer-label .kicker{
+    font-size: 0.8rem;
+    color: var(--teal-light);
+    margin-bottom: 4px;
+  }
+  .drawer-label h1{
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 600;
+    font-style: italic;
+  }
+  .drawer-label .author{
+    font-size: 1rem;
+    color: var(--teal-light);
+    margin-top: 2px;
+  }
+  .buy-link{
+    display:inline-block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--sand-light);
+    border-bottom: 1px solid var(--ochre);
+    padding-bottom: 1px;
+  }
+  .buy-link:hover{ color: var(--ochre); }
+
+  main{
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: clamp(16px,4vw,40px);
+  }
+
+  /* Hero stamp */
+  .hero{
+    display:flex;
+    gap: clamp(20px,4vw,48px);
+    align-items:center;
+    flex-wrap: wrap;
+    padding: 28px 0 36px;
+    border-bottom: 1px solid var(--card-line);
+    margin-bottom: 28px;
+  }
+  .stamp{
+    width: 168px;
+    height: 168px;
+    border-radius: 50%;
+    border: 3px double var(--rust);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    transform: rotate(-4deg);
+    color: var(--rust);
+    flex: none;
+    background: var(--sand-light);
+  }
+  .stamp .stamp-number{ font-size: 2.1rem; line-height:1; font-weight:700; }
+  .stamp .stamp-sub{ font-size: 0.72rem; margin-top:4px; text-align:center; padding:0 10px; color: var(--rust); }
+  .hero-text h2{ font-size: 1.3rem; font-weight:600; margin-bottom:6px; }
+  .hero-text p{ margin:0; color: var(--ink-soft); max-width: 60ch; line-height:1.5; }
+  .as-of{ font-size: 0.85rem; color: var(--ink-soft); margin-top:8px; }
+
+  /* Stat strip */
+  .stat-strip{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+    border-top: 1px solid var(--card-line);
+    border-bottom: 1px solid var(--card-line);
+    margin-bottom: 40px;
+  }
+  .stat{
+    padding: 16px 18px;
+    border-left: 1px solid var(--card-line);
+  }
+  .stat:first-child{ border-left:none; }
+  .stat .num{ font-family:'Lora', serif; font-size: 1.6rem; font-weight:600; }
+  .stat .lbl{ font-size: 0.82rem; color: var(--ink-soft); margin-top:2px; }
+
+  section{ margin-bottom: 48px; }
+  section > h3{
+    font-size: 1.15rem;
+    font-weight: 600;
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+  section > .desc{ color: var(--ink-soft); font-size:0.9rem; margin-bottom:16px; max-width: 68ch; }
+
+  .card{
+    background: var(--sand-light);
+    border: 1px solid var(--card-line);
+    padding: 20px;
+    position: relative;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    top:0; left: 24px; right:24px;
+    height:0;
+    border-top: 1px dashed var(--card-line);
+  }
+  .card-inner{ padding-top: 6px; }
+
+  table{ width:100%; border-collapse: collapse; font-size: 0.92rem; }
+  th{ text-align:left; font-weight:600; color: var(--ink-soft); font-size:0.78rem; padding: 6px 10px; border-bottom: 1px solid var(--line-strong); }
+  td{ padding: 9px 10px; border-bottom: 1px solid var(--card-line); vertical-align: top; }
+  tr:last-child td{ border-bottom:none; }
+
+  .badge{
+    display:inline-block;
+    padding: 2px 9px;
+    font-size: 0.76rem;
+    font-weight:600;
+    border: 1px solid currentColor;
+    border-radius: 3px;
+  }
+  .badge.available{ color: var(--available); }
+  .badge.loaned{ color: var(--rust); }
+  .badge.reserved{ color: var(--ochre); }
+  .badge.processing{ color: var(--processing); }
+
+  .lib-name{ font-weight:600; }
+  a.lib-link{ color: inherit; text-decoration: none; border-bottom: 1px solid var(--card-line); }
+  a.lib-link:hover{ color: var(--rust); border-bottom-color: var(--rust); }
+  .lib-city{ color: var(--ink-soft); font-size: 0.85rem; }
+
+  /* Populariteit */
+  .sort-bar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; font-size:0.82rem; color: var(--ink-soft); }
+  .sort-bar button{
+    font: inherit; font-weight:600; color: var(--ink);
+    background: transparent; border: 1px solid var(--line-strong);
+    padding: 5px 12px; border-radius: 3px; cursor: pointer;
+  }
+  .sort-bar button:hover{ border-color: var(--rust); color: var(--rust); }
+  .sort-bar button.active{ background: var(--teal); border-color: var(--teal); color: var(--sand-light); }
+  .table-scroll{ overflow-x:auto; }
+  #popTable td.num, #popTable th.num{ text-align:right; white-space:nowrap; }
+  #popTable td.rank{ font-family:'Lora', serif; font-size:1.15rem; font-weight:700; color: var(--rust); width:2.2em; }
+  .metric-cell{ min-width: 110px; }
+  .metric-cell .bar{ height:5px; background: var(--card-line); margin-top:5px; border-radius:2px; overflow:hidden; }
+  .metric-cell .bar span{ display:block; height:100%; background: var(--teal); }
+  .metric-cell.pct .bar span{ background: var(--rust); }
+  .sort-col{ background: rgba(215,155,62,0.12); }
+  .muted-row td{ color: var(--ink-soft); font-size:0.85rem; }
+  .few-data{ color: var(--ochre); font-size:0.74rem; font-weight:600; }
+  .pop-note{ margin-top:12px; font-size:0.78rem; color: var(--ink-soft); line-height:1.5; }
+
+  .empty-state{
+    padding: 28px 20px;
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    line-height:1.6;
+  }
+
+  .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px){ .grid-2{ grid-template-columns: 1fr; } }
+
+  canvas{ max-height: 320px; }
+
+  .heatmap-wrap{ overflow-x:auto; }
+  .heatmap{ border-collapse: collapse; font-size: 0.78rem; }
+  .heatmap th, .heatmap td{ padding: 6px 8px; border: 1px solid var(--sand); text-align:center; }
+  .heatmap th{ background: transparent; border:none; color: var(--ink-soft); font-weight:500; }
+  .heatmap td.lib-col{ text-align:left; font-weight:600; border:none; padding-right: 14px; white-space:nowrap; }
+  .cell-available{ background: var(--available); }
+  .cell-loaned{ background: var(--rust); }
+  .cell-reserved{ background: var(--ochre); }
+  .cell-processing{ background: var(--processing); }
+  .legend{ display:flex; gap:16px; margin-top:10px; font-size:0.78rem; color: var(--ink-soft); align-items:center; flex-wrap:wrap; }
+  .legend .swatch{ display:inline-block; width:10px; height:10px; margin-right:5px; vertical-align:middle; }
+
+  .alert-row{
+    border-left: 3px solid var(--rust);
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: var(--sand-light);
+    border-top: 1px solid var(--card-line);
+    border-right: 1px solid var(--card-line);
+    border-bottom: 1px solid var(--card-line);
+    font-size: 0.9rem;
+  }
+  .alert-row.positive{ border-left-color: var(--available); }
+
+  footer{
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 clamp(16px,4vw,40px) 40px;
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+  }
+  footer a{ color: var(--ink-soft); text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="drawer-label">
+  <img class="cover-thumb" src="https://webservices.bibliotheek.be/index.php?func=cover&ISBN=9789464342147&VLACCnr=10455489&CDR=&EAN=&ISMN=&EBS=&coversize=large" alt="Cover van Zorgen voor later" />
+  <div class="book-info">
+    <div class="kicker" id="branchCountKicker">Beschikbaarheidstracker &middot; Vlaamse openbare bibliotheken</div>
+    <h1 id="bookTitle">Laden…</h1>
+    <div class="author" id="bookAuthor"></div>
+    <a class="buy-link" href="https://www.pelckmansuitgevers.be/zorgen-voor-morgen.html" target="_blank" rel="noopener">Het boek kopen &rarr;</a>
+  </div>
+</div>
+
+<main>
+
+  <div class="hero">
+    <div class="stamp">
+      <div class="stamp-number" id="stampFraction">–/–</div>
+      <div class="stamp-sub">exemplaren nu beschikbaar</div>
+    </div>
+    <div class="hero-text">
+      <h2>Vandaag</h2>
+      <p id="heroSummary">Gegevens worden geladen…</p>
+      <div class="as-of" id="asOf"></div>
+    </div>
+  </div>
+
+  <div class="stat-strip" id="statStrip"></div>
+
+  <section>
+    <h3>Beschikbaarheid per bibliotheek</h3>
+    <div class="desc">Elke vestiging met een exemplaar, volgens de meest recente crawl. "Verwacht terug" komt rechtstreeks van de eigen uitleendatum van het bibliotheeksysteem.</div>
+    <div class="card"><div class="card-inner">
+      <table id="libraryTable">
+        <thead><tr><th>Bibliotheek</th><th>Exemplaren</th><th>Status</th><th>Verwacht terug</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div></div>
+  </section>
+
+  <section>
+    <h3>Beschikbaarheidstrend, hele netwerk</h3>
+    <div class="desc">Aandeel van alle exemplaren in Vlaanderen dat nu te leen is, dag na dag bijgehouden.</div>
+    <div class="card"><div class="card-inner">
+      <canvas id="trendChart"></canvas>
+      <div class="empty-state" id="trendEmpty" style="display:none;">Nog maar één dag aan gegevens — deze grafiek vult zich verder aan zodra de dagelijkse crawl een paar dagen gedraaid heeft.</div>
+    </div></div>
+  </section>
+
+  <div class="grid-2">
+    <section>
+      <h3>Uitleen- en terugbrengactiviteit</h3>
+      <div class="desc">Hoe vaak exemplaren uitgeleend en teruggebracht worden, afgeleid door elke dag te vergelijken met de vorige.</div>
+      <div class="card"><div class="card-inner">
+        <canvas id="eventsChart"></canvas>
+        <div class="empty-state" id="eventsEmpty">Uitleen- en terugbrenggebeurtenissen vragen minstens twee dagen geschiedenis om te detecteren — kom morgen terug.</div>
+      </div></div>
+    </section>
+
+    <section>
+      <h3>Reservatiewachtrij per bibliotheek</h3>
+      <div class="desc">Reservaties op deze titel, vaak een sterker signaal van interesse dan het aantal uitleningen alleen.</div>
+      <div class="card"><div class="card-inner">
+        <canvas id="reservationChart"></canvas>
+        <div class="empty-state" id="reservationEmpty" style="display:none;"></div>
+      </div></div>
+    </section>
+  </div>
+
+  <section>
+    <h3>Beschikbaarheidskalender, alle bibliotheken</h3>
+    <div class="desc">Eén kolom per dag dat dit boek gevolgd wordt, één rij per bibliotheek. Vult zich verder aan naarmate de crawl geschiedenis opbouwt.</div>
+    <div class="card"><div class="card-inner">
+      <div class="heatmap-wrap" id="heatmapWrap"></div>
+      <div class="legend">
+        <span><span class="swatch cell-available"></span>Beschikbaar</span>
+        <span><span class="swatch cell-loaned"></span>Uitgeleend</span>
+        <span><span class="swatch cell-reserved"></span>Gereserveerd, geen vrij exemplaar</span>
+        <span><span class="swatch cell-processing"></span>Niet beschikbaar (in verwerking)</span>
+      </div>
+    </div></div>
+  </section>
+
+  <section>
+    <h3>Populariteit per bibliotheek</h3>
+    <div class="desc">Rangschikking van de bibliotheken op basis van hoe vaak dit boek werd uitgeleend en hoe vaak het uit de kast is. Een bibliotheek telt pas mee vanaf de dag dat het boek er uitleenbaar werd; dagen in verwerking ("niet beschikbaar") tellen niet mee.</div>
+    <div class="card"><div class="card-inner">
+      <div class="sort-bar" id="popSort">
+        <span>Rangschik op:</span>
+        <button type="button" data-sort="loans" class="active">Aantal uitleningen</button>
+        <button type="button" data-sort="rate">Uitleningen per 30 dagen</button>
+        <button type="button" data-sort="pct">% dagen uitgeleend</button>
+      </div>
+      <div class="table-scroll">
+        <table id="popTable">
+          <thead><tr>
+            <th>#</th><th>Bibliotheek</th><th>Uitleenbaar sinds</th>
+            <th class="num">Dagen uitleenbaar</th>
+            <th data-col="loans">Uitleningen</th>
+            <th class="num" data-col="rate">Per 30 dagen</th>
+            <th class="num">Dagen uitgeleend</th>
+            <th data-col="pct">% dagen uitgeleend</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="popEmpty" style="display:none;">Nog geen bibliotheek met een uitleenbaar exemplaar.</div>
+      <div class="pop-note">
+        Een uitlening is een exemplaar dat van "beschikbaar" (of "in verwerking") naar "uitgeleend" of "gereserveerd" gaat; een gereserveerd exemplaar telt dus als uitgeleend, en een reservatie die daarna wordt afgehaald blijft dezelfde uitlening. Een uitlening die al bezig was toen het exemplaar voor het eerst werd gezien, telt mee als één uitlening. Verlengingen tellen niet als nieuwe uitlening. Bij "begin tracking" is de eerste gevolgde dag het startpunt, niet noodzakelijk de dag dat het boek er uitleenbaar werd.
+      </div>
+    </div></div>
+  </section>
+
+  <div class="grid-2">
+    <section>
+      <h3>Uitleningen per weekdag</h3>
+      <div class="desc">Op welke dagen dit boek doorgaans wordt meegenomen, zodra er genoeg uitleengebeurtenissen zijn waargenomen.</div>
+      <div class="card"><div class="card-inner">
+        <canvas id="weekdayChart"></canvas>
+        <div class="empty-state" id="weekdayEmpty">Nog niet genoeg uitleengebeurtenissen voor een weekdagpatroon.</div>
+      </div></div>
+    </section>
+
+    <section>
+      <h3>Recente wijzigingen</h3>
+      <div class="desc">Exemplaren die sinds de vorige crawl beschikbaar werden of net uitgeleend zijn.</div>
+      <div class="card"><div class="card-inner" id="alertsBox">
+        <div class="empty-state">Nog maar één momentopname — vergelijkingen verschijnen na de tweede dagelijkse crawl.</div>
+      </div></div>
+    </section>
+  </div>
+
+  <section>
+    <h3>Verwachte terugbrengdatums</h3>
+    <div class="desc">Exemplaren die momenteel uitgeleend zijn, eerst de dichtstbijzijnde datum.</div>
+    <div class="card"><div class="card-inner">
+      <table id="returnsTable">
+        <thead><tr><th>Bibliotheek</th><th>Verwacht terug</th><th>Dagen resterend</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty-state" id="returnsEmpty" style="display:none;">Geen exemplaren momenteel uitgeleend.</div>
+    </div></div>
+  </section>
+
+</main>
+
+<footer>
+  Bron: cataloguswebservices.bibliotheek.be (Vlaams netwerk van openbare bibliotheken). Dagelijks automatisch bijgewerkt. Meer over het boek op <a href="https://www.pelckmansuitgevers.be/zorgen-voor-morgen.html" target="_blank" rel="noopener">pelckmansuitgevers.be</a>.
+</footer>
+
+<script>
+const CHART_FONT = "Inter, sans-serif";
+const COLORS = {
+  teal: '#24454C', available: '#4C7A4F', rust: '#C1592B', ochre: '#D79B3E', ink: '#2A2013', softline: '#D8C6A0'
+};
+
+async function loadHistory(){
+  const res = await fetch('data/history.jsonl', {cache: 'no-store'});
+  const text = await res.text();
+  return text.split('\n').filter(l => l.trim().length).map(l => JSON.parse(l))
+    .sort((a,b) => new Date(a.fetched_at) - new Date(b.fetched_at));
+}
+
+function fmtDate(iso){
+  return new Date(iso).toLocaleDateString('nl-BE', {day:'numeric', month:'short', year:'numeric'});
+}
+function fmtDateShort(iso){
+  return new Date(iso).toLocaleDateString('nl-BE', {day:'numeric', month:'short'});
+}
+
+function branchKey(b){ return b.branch_id; }
+
+function esc(str){
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// The `url` in the feed points to a location path that 404s, so keep only the
+// library's own domain and replace the path with the ?frabl= query.
+const LIBRARY_QUERY = '?frabl=4143FC36BF1ACA0';
+function libraryUrl(rawUrl){
+  try {
+    const u = new URL(rawUrl);
+    return u.origin + '/' + LIBRARY_QUERY;
+  } catch (e) {
+    return null;
+  }
+}
+// Library name as a link to the library's own website. Falls back to plain
+// text if the feed has no (valid) url.
+function libLink(b){
+  const name = esc(b.branch_name);
+  const href = b.url ? libraryUrl(b.url) : null;
+  if (!href) return name;
+  return `<a class="lib-link" href="${esc(href)}" target="_blank" rel="noopener">${name}</a>`;
+}
+
+// State of one copy. Older snapshots (before the 'niet beschikbaar' state was
+// tracked) have no `state` field, so derive it from the raw status.
+function itemState(it){
+  if (it.state) return it.state;
+  if (it.available) return 'available';
+  if (it.status_code === 'loanedout') return 'loaned';
+  if (it.status_code === 'hasreservation') return 'reserved';
+  if (it.status_code === 'notavailable') return 'processing';
+  return 'other';
+}
+
+function buildBranchIndex(snapshots){
+  // branch_id -> { meta, series: [{date, available, total, reserved, onLoan}] }
+  const idx = {};
+  for (const snap of snapshots){
+    const day = snap.fetched_at.slice(0,10);
+    for (const b of snap.branches){
+      const key = branchKey(b);
+      if (!idx[key]) idx[key] = { meta: b, series: [] };
+      idx[key].meta = b; // keep latest meta
+      idx[key].series.push({
+        date: day, fetched_at: snap.fetched_at,
+        available: b.available_copies, total: b.total_copies,
+        reserved: b.reserved_copies, onLoan: b.on_loan_copies, processing: b.processing_copies || 0
+      });
+    }
+  }
+  return idx;
+}
+
+function detectEvents(snapshots){
+  // Track each physical item (by item_id) across snapshots.
+  //  available -> loaned            = loan
+  //  loaned/reserved -> available   = return
+  // Transitions from/to 'processing' (niet beschikbaar) are not loans or
+  // returns: the copy is just being made ready for lending.
+  const lastState = {}; // item_id -> {state}
+  const events = []; // {date, type: 'loan'|'return', branch, city}
+  for (const snap of snapshots){
+    const day = snap.fetched_at.slice(0,10);
+    for (const b of snap.branches){
+      for (const it of b.items){
+        const state = itemState(it);
+        const prev = lastState[it.item_id];
+        if (prev){
+          let type = null;
+          if (prev.state === 'available' && (state === 'loaned' || state === 'reserved')) type = 'loan';
+          else if ((prev.state === 'loaned' || prev.state === 'reserved') && state === 'available') type = 'return';
+          if (type) events.push({ date: day, type, branch: b.branch_name, city: b.city });
+        }
+        lastState[it.item_id] = { state };
+      }
+    }
+  }
+  return events;
+}
+
+// ---- Populariteit per bibliotheek ----------------------------------------
+// One snapshot per day (the last one wins when the crawl ran more than once).
+function dailySnapshots(snapshots){
+  const byDay = new Map();
+  for (const s of snapshots) byDay.set(s.fetched_at.slice(0,10), s);
+  return [...byDay.entries()].sort((a,b)=> a[0].localeCompare(b[0]));
+}
+function dayDiff(a, b){
+  return Math.round((Date.parse(b+'T00:00:00Z') - Date.parse(a+'T00:00:00Z')) / 86400000);
+}
+
+// Per branch:
+//  - start:     first day a copy was lendable (available, loaned or reserved);
+//               days in 'processing' (niet beschikbaar) never count.
+//  - availDays: copy-days lendable since `start`. A snapshot's state holds
+//               until the next snapshot, and the latest snapshot counts 1 day.
+//  - outDays:   those days on which the copy was loaned or reserved.
+//  - loans:     one per loan period: a switch from not-out to out (available or
+//               processing -> loaned/reserved), plus a copy that is already out
+//               when it is first seen (that loan began before tracking, but it
+//               is still one loan). reserved -> loaned and renewals (new return
+//               date, still loaned) continue the same loan and are not counted.
+function computePopularity(snapshots){
+  const days = dailySnapshots(snapshots);
+  const stats = {};
+  const prevOut = {}; // branch|item -> was out in the previous snapshot
+  for (let i = 0; i < days.length; i++){
+    const [day, snap] = days[i];
+    const span = i + 1 < days.length ? dayDiff(day, days[i+1][0]) : 1;
+    for (const b of snap.branches){
+      const key = branchKey(b);
+      const st = stats[key] || (stats[key] = { meta: b, loans: 0, availDays: 0, outDays: 0, start: null });
+      st.meta = b;
+      for (const it of b.items){
+        const state = itemState(it);
+        const out = state === 'loaned' || state === 'reserved';
+        const lendable = out || state === 'available';
+        const k = key + '|' + it.item_id;
+        if (out && (!(k in prevOut) || !prevOut[k])) st.loans++;
+        prevOut[k] = out;
+        if (lendable){
+          if (st.start === null) st.start = day;
+          st.availDays += span;
+          if (out) st.outDays += span;
+        }
+      }
+    }
+  }
+  const firstDay = days.length ? days[0][0] : null;
+  return Object.values(stats).map(st => ({
+    ...st,
+    firstDay,
+    rate: st.availDays ? st.loans / st.availDays * 30 : null,
+    pct: st.availDays ? st.outDays / st.availDays : null,
+  }));
+}
+
+let popStats = [];
+let popSort = 'loans';
+
+function renderPopularity(){
+  const tbody = document.querySelector('#popTable tbody');
+  const ranked = popStats.filter(s => s.start !== null);
+  const waiting = popStats.filter(s => s.start === null);
+  const empty = document.getElementById('popEmpty');
+  if (!ranked.length){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+  }
+
+  // Sort on the chosen metric; ties fall back on the other metrics, then name.
+  const order = { loans: ['loans','rate','pct'], rate: ['rate','pct','loans'], pct: ['pct','loans','rate'] }[popSort];
+  ranked.sort((a,b)=>{
+    for (const m of order){
+      const d = (b[m] ?? -1) - (a[m] ?? -1);
+      if (Math.abs(d) > 1e-9) return d;
+    }
+    return a.meta.branch_name.localeCompare(b.meta.branch_name);
+  });
+  const val = s => s[popSort] ?? -1;
+  const maxLoans = Math.max(1, ...ranked.map(s => s.loans));
+  const nf = new Intl.NumberFormat('nl-BE', { maximumFractionDigits: 1 });
+  const col = m => m === popSort ? ' sort-col' : '';
+
+  let html = ranked.map(s=>{
+    const rank = 1 + ranked.filter(o => Math.abs(val(o) - val(s)) > 1e-9 && val(o) > val(s)).length;
+    const fromStart = s.start === s.firstDay;
+    const few = s.availDays < 14 ? ` <span class="few-data" title="Pas ${s.availDays} dagen uitleenbaar gevolgd: vergelijk voorzichtig">weinig data</span>` : '';
+    return `<tr>
+      <td class="rank">${rank}</td>
+      <td><div class="lib-name">${libLink(s.meta)}</div><div class="lib-city">${esc(s.meta.city)}${few}</div></td>
+      <td>${fmtDate(s.start)}${fromStart ? '<div class="lib-city">begin tracking</div>' : ''}</td>
+      <td class="num">${s.availDays}</td>
+      <td class="metric-cell${col('loans')}"><strong>${s.loans}</strong><div class="bar"><span style="width:${Math.round(100*s.loans/maxLoans)}%"></span></div></td>
+      <td class="num${col('rate')}">${nf.format(s.rate)}</td>
+      <td class="num">${s.outDays}</td>
+      <td class="metric-cell pct${col('pct')}"><strong>${Math.round(100*s.pct)}%</strong><div class="bar"><span style="width:${Math.round(100*s.pct)}%"></span></div></td>
+    </tr>`;
+  }).join('');
+
+  if (waiting.length){
+    html += waiting
+      .sort((a,b)=> a.meta.branch_name.localeCompare(b.meta.branch_name))
+      .map(s => `<tr class="muted-row"><td>–</td><td><div class="lib-name">${libLink(s.meta)}</div><div class="lib-city">${esc(s.meta.city)}</div></td><td colspan="6">Nog in verwerking, nog niet uitleenbaar</td></tr>`)
+      .join('');
+  }
+  tbody.innerHTML = html;
+  document.querySelectorAll('#popSort button').forEach(btn => btn.classList.toggle('active', btn.dataset.sort === popSort));
+}
+
+function initPopularity(snapshots){
+  popStats = computePopularity(snapshots);
+  document.querySelectorAll('#popSort button').forEach(btn => {
+    btn.addEventListener('click', () => { popSort = btn.dataset.sort; renderPopularity(); });
+  });
+  renderPopularity();
+}
+
+function renderHeader(latest){
+  document.getElementById('bookTitle').textContent = latest.book.title || 'Zonder titel';
+  document.getElementById('bookAuthor').textContent = latest.book.author || '';
+  document.getElementById('branchCountKicker').textContent =
+    `Beschikbaarheidstracker · ${latest.network.branch_count} ${latest.network.branch_count === 1 ? 'bibliotheek' : 'bibliotheken'} in Vlaanderen`;
+}
+
+function renderHero(latest){
+  document.getElementById('stampFraction').textContent =
+    `${latest.network.available_copies}/${latest.network.total_copies - (latest.network.processing_copies || 0)}`;
+  const processing = latest.network.processing_copies || 0;
+  const loanable = latest.network.total_copies - processing;
+  const pct = loanable ? Math.round(100*latest.network.available_copies/loanable) : 0;
+  let text = `${latest.network.available_copies} van de ${loanable} uitleenbare exemplaren van "${latest.book.title}" zijn nu te leen, verspreid over ${latest.network.branch_count} bibliotheken (${pct}% beschikbaarheid).`;
+  if (processing > 0) text += ` Daarnaast ${processing === 1 ? 'is 1 exemplaar' : 'zijn ' + processing + ' exemplaren'} nog in verwerking en nog niet uitleenbaar.`;
+  document.getElementById('heroSummary').textContent = text;
+  document.getElementById('asOf').textContent = `Laatst gecontroleerd op ${fmtDate(latest.fetched_at)}`;
+}
+
+function renderStatStrip(latest){
+  const onLoan = latest.branches.reduce((s,b)=>s+b.on_loan_copies,0);
+  const reserved = latest.branches.reduce((s,b)=>s+b.reserved_copies,0);
+  const stats = [
+    ['Totaal aantal exemplaren', latest.network.total_copies],
+    ['Nu beschikbaar', latest.network.available_copies],
+    ['Uitgeleend', onLoan],
+    ['Gereserveerd', reserved],
+    ['In verwerking', latest.network.processing_copies || 0],
+    ['Gevolgde bibliotheken', latest.network.branch_count],
+  ];
+  const el = document.getElementById('statStrip');
+  el.innerHTML = stats.map(([lbl,num]) => `<div class="stat"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join('');
+}
+
+function branchStatus(b){
+  if (b.available_copies > 0) return {label:'Beschikbaar', cls:'available'};
+  if ((b.processing_copies || 0) > 0 && b.on_loan_copies === 0 && b.reserved_copies === 0) return {label:'Niet beschikbaar (in verwerking)', cls:'processing'};
+  if (b.reserved_copies > 0 && b.on_loan_copies === 0) return {label:'Gereserveerd', cls:'reserved'};
+  return {label:'Uitgeleend', cls:'loaned'};
+}
+
+function nearestReturnDate(b){
+  const dates = b.items.filter(i=>i.return_date).map(i=>i.return_date).sort();
+  return dates.length ? dates[0] : null;
+}
+
+function renderLibraryTable(latest){
+  const tbody = document.querySelector('#libraryTable tbody');
+  const branches = [...latest.branches].sort((a,b)=> (a.city||'').localeCompare(b.city||'') || a.branch_name.localeCompare(b.branch_name));
+  tbody.innerHTML = branches.map(b=>{
+    const st = branchStatus(b);
+    const ret = nearestReturnDate(b);
+    const procItem = st.cls === 'processing' ? b.items.find(i => itemState(i) === 'processing' && i.received_date) : null;
+    const lastCol = ret ? fmtDate(ret) : (procItem ? `<span class="lib-city">ontvangen op ${fmtDate(procItem.received_date)}</span>` : '–');
+    return `<tr>
+      <td><div class="lib-name">${libLink(b)}</div><div class="lib-city">${esc(b.city)}</div></td>
+      <td>${b.available_copies}/${b.total_copies}</td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td>${lastCol}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTrendChart(snapshots){
+  const labels = snapshots.map(s=>fmtDateShort(s.fetched_at));
+  const data = snapshots.map(s=>{
+    const loanable = s.network.total_copies - (s.network.processing_copies || 0);
+    return loanable ? Math.round(100*s.network.available_copies/loanable) : 0;
+  });
+  if (snapshots.length < 2){
+    document.getElementById('trendEmpty').style.display = 'block';
+  }
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label:'Beschikbaarheid %', data, borderColor: COLORS.teal, backgroundColor: 'rgba(36,69,76,0.14)', fill:true, tension:0.25, pointRadius:4 }]},
+    options: {
+      plugins:{ legend:{display:false}, title:{display:false} },
+      scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+'%', font:{family:CHART_FONT} } }, x:{ ticks:{font:{family:CHART_FONT}} } }
+    }
+  });
+}
+
+function renderEventsChart(events){
+  if (events.length === 0){
+    document.getElementById('eventsEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('eventsEmpty').style.display = 'none';
+  // weekly buckets
+  const weekKey = d => { const dt=new Date(d); const onejan=new Date(dt.getFullYear(),0,1); const week=Math.ceil((((dt-onejan)/86400000)+onejan.getDay()+1)/7); return `${dt.getFullYear()}-W${week}`; };
+  const buckets = {};
+  for (const e of events){
+    const wk = weekKey(e.date);
+    buckets[wk] = buckets[wk] || {loan:0, return:0};
+    buckets[wk][e.type]++;
+  }
+  const weeks = Object.keys(buckets).sort();
+  new Chart(document.getElementById('eventsChart'), {
+    type:'bar',
+    data:{ labels: weeks, datasets:[
+      {label:'Uitleningen', data: weeks.map(w=>buckets[w].loan), backgroundColor: COLORS.rust},
+      {label:'Terugbrengingen', data: weeks.map(w=>buckets[w].return), backgroundColor: COLORS.available},
+    ]},
+    options:{ plugins:{legend:{labels:{font:{family:CHART_FONT}}}}, scales:{x:{ticks:{font:{family:CHART_FONT}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{family:CHART_FONT}}}} }
+  });
+}
+
+function renderReservationChart(branchIndex, snapshots){
+  const keys = Object.keys(branchIndex);
+  const anyReserved = keys.some(k => branchIndex[k].series.some(s=>s.reserved>0));
+  const labels = snapshots.map(s=>fmtDateShort(s.fetched_at));
+  if (!anyReserved){
+    document.getElementById('reservationEmpty').style.display = 'block';
+    document.getElementById('reservationEmpty').textContent = 'Nog geen reservaties geregistreerd voor een bibliotheek.';
+  }
+  const palette = [COLORS.teal, COLORS.rust, COLORS.ochre, COLORS.available, '#5B4636', '#7A6E4E'];
+  const datasets = keys.map((k,i)=>{
+    const b = branchIndex[k];
+    const byDate = Object.fromEntries(b.series.map(s=>[s.date, s.reserved]));
+    return { label: b.meta.branch_name, data: snapshots.map(s=> byDate[s.fetched_at.slice(0,10)] ?? null), borderColor: palette[i%palette.length], tension:0.25, pointRadius:3, spanGaps:true };
+  });
+  new Chart(document.getElementById('reservationChart'), {
+    type:'line',
+    data:{ labels, datasets },
+    options:{ plugins:{legend:{labels:{font:{family:CHART_FONT}}}}, scales:{ y:{beginAtZero:true, ticks:{stepSize:1, font:{family:CHART_FONT}}}, x:{ticks:{font:{family:CHART_FONT}}} } }
+  });
+}
+
+function renderWeekdayChart(events){
+  if (events.filter(e=>e.type==='loan').length < 3){
+    return; // keep empty state visible
+  }
+  document.getElementById('weekdayEmpty').style.display='none';
+  const names=['Zo','Ma','Di','Wo','Do','Vr','Za'];
+  const counts=new Array(7).fill(0);
+  events.filter(e=>e.type==='loan').forEach(e=>{ counts[new Date(e.date).getDay()]++; });
+  new Chart(document.getElementById('weekdayChart'), {
+    type:'bar',
+    data:{ labels: names, datasets:[{label:'Uitleningen', data:counts, backgroundColor: COLORS.teal}]},
+    options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{stepSize:1, font:{family:CHART_FONT}}}, x:{ticks:{font:{family:CHART_FONT}}}} }
+  });
+}
+
+function renderHeatmap(branchIndex, snapshots){
+  const dates = snapshots.map(s=>s.fetched_at.slice(0,10));
+  const keys = Object.keys(branchIndex).sort((a,b)=>{
+    const ba=branchIndex[a].meta, bb=branchIndex[b].meta;
+    return (ba.city||'').localeCompare(bb.city||'') || ba.branch_name.localeCompare(bb.branch_name);
+  });
+  let html = '<table class="heatmap"><thead><tr><th></th>' + dates.map(d=>`<th>${fmtDateShort(d+'T00:00:00Z')}</th>`).join('') + '</tr></thead><tbody>';
+  for (const k of keys){
+    const b = branchIndex[k];
+    const byDate = Object.fromEntries(b.series.map(s=>[s.date,s]));
+    html += `<tr><td class="lib-col">${libLink(b.meta)} <span class="lib-city">(${esc(b.meta.city)})</span></td>`;
+    for (const d of dates){
+      const s = byDate[d];
+      let cls = '';
+      if (s){
+        if (s.available>0) cls='cell-available';
+        else if (s.processing>0 && s.onLoan===0 && s.reserved===0) cls='cell-processing';
+        else if (s.reserved>0 && s.onLoan===0) cls='cell-reserved';
+        else cls='cell-loaned';
+      }
+      html += `<td class="${cls}" title="${s ? `${s.available}/${s.total} beschikbaar` : 'geen gegevens'}">&nbsp;</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('heatmapWrap').innerHTML = html;
+}
+
+function renderAlerts(snapshots){
+  if (snapshots.length < 2) return; // keep default empty state
+  const prev = snapshots[snapshots.length-2];
+  const curr = snapshots[snapshots.length-1];
+  const prevByBranch = Object.fromEntries(prev.branches.map(b=>[branchKey(b), b]));
+  const rows = [];
+  for (const b of curr.branches){
+    const p = prevByBranch[branchKey(b)];
+    if (!p) { rows.push({positive:true, text:`${libLink(b)} (${esc(b.city)}) volgt deze titel voortaan mee, met ${b.available_copies}/${b.total_copies} beschikbaar.`}); continue; }
+    if (b.available_copies > p.available_copies){
+      rows.push({positive:true, text:`${libLink(b)} (${esc(b.city)}): een exemplaar werd beschikbaar (${p.available_copies}→${b.available_copies}).`});
+    } else if (b.available_copies < p.available_copies){
+      rows.push({positive:false, text:`${libLink(b)} (${esc(b.city)}): een exemplaar werd uitgeleend (${p.available_copies}→${b.available_copies}).`});
+    }
+  }
+  const box = document.getElementById('alertsBox');
+  if (rows.length === 0){
+    box.innerHTML = '<div class="empty-state">Geen wijziging in beschikbaarheid sinds de vorige crawl.</div>';
+    return;
+  }
+  box.innerHTML = rows.map(r=>`<div class="alert-row ${r.positive?'positive':''}">${r.text}</div>`).join('');
+}
+
+function renderReturnsTable(latest){
+  const rows = [];
+  for (const b of latest.branches){
+    for (const it of b.items){
+      if (it.status_code === 'loanedout' && it.return_date){
+        rows.push({ b, city: b.city, date: it.return_date });
+      }
+    }
+  }
+  rows.sort((a,b)=> a.date.localeCompare(b.date));
+  const tbody = document.querySelector('#returnsTable tbody');
+  if (rows.length === 0){
+    document.getElementById('returnsEmpty').style.display = 'block';
+    tbody.innerHTML = '';
+    return;
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  tbody.innerHTML = rows.map(r=>{
+    const due = new Date(r.date);
+    const daysLeft = Math.round((due-today)/86400000);
+    return `<tr><td><div class="lib-name">${libLink(r.b)}</div><div class="lib-city">${esc(r.city)}</div></td><td>${fmtDate(r.date)}</td><td>${daysLeft >= 0 ? daysLeft+' dagen' : 'te laat'}</td></tr>`;
+  }).join('');
+}
+
+async function main(){
+  let snapshots;
+  try{
+    snapshots = await loadHistory();
+  } catch (e){
+    document.getElementById('bookTitle').textContent = 'Gegevens konden niet geladen worden';
+    document.getElementById('heroSummary').textContent = 'Dit dashboard moet via http(s) bediend worden (bv. GitHub Pages) om data/history.jsonl te kunnen ophalen — het bestand rechtstreeks openen werkt niet.';
+    return;
+  }
+  if (!snapshots.length) return;
+  const latest = snapshots[snapshots.length-1];
+  const branchIndex = buildBranchIndex(snapshots);
+  const events = detectEvents(snapshots);
+
+  renderHeader(latest);
+  renderHero(latest);
+  renderStatStrip(latest);
+  renderLibraryTable(latest);
+  renderTrendChart(snapshots);
+  renderEventsChart(events);
+  renderReservationChart(branchIndex, snapshots);
+  renderWeekdayChart(events);
+  renderHeatmap(branchIndex, snapshots);
+  initPopularity(snapshots);
+  renderAlerts(snapshots);
+  renderReturnsTable(latest);
+}
+
+main();
+</script>
+</body>
+</html>
