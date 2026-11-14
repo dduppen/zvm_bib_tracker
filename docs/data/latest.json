@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-13T05:48:13+00:00",
+  "fetched_at": "2026-11-14T05:38:38+00:00",
   "book": {
     "title": "Zorgen voor morgen : word en blijf architect van je latere leven",
     "author": "Daan Duppen",
@@ -10,7 +10,7 @@
   },
   "network": {
     "total_copies": 116,
-    "available_copies": 110,
+    "available_copies": 111,
     "processing_copies": 0,
     "ordered_copies": 1,
     "branch_count": 115
@@ -2708,8 +2708,8 @@
         "city": "HAACHT"
       },
       "total_copies": 1,
-      "available_copies": 0,
-      "on_loan_copies": 1,
+      "available_copies": 1,
+      "on_loan_copies": 0,
       "reserved_copies": 0,
       "processing_copies": 0,
       "ordered_copies": 0,
@@ -2717,15 +2717,15 @@
         {
           "item_id": "29329289",
           "wiseid": "4720005",
-          "available": false,
-          "state": "loaned",
-          "status_code": "loanedout",
-          "status_label": "Uitgeleend",
+          "available": true,
+          "state": "available",
+          "status_code": "none",
+          "status_label": "Aanwezig",
           "count": 1,
           "shelfmark": "324 DUPP",
           "location_in_branch": "Volwassenen informatief",
           "received_date": "2024-01-08",
-          "return_date": "2026-11-09"
+          "return_date": null
         }
       ]
     },
